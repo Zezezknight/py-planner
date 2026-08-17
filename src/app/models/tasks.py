@@ -10,13 +10,13 @@ AllowedStatus = Literal["todo", "done"]
 
 
 class TaskCreate(BaseModel):
-    title: constr(min_length=1, max_length=200)
+    title: str = Field(min_length=1, max_length=200)
     date: date
     type: AllowedType = "task"
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[constr(min_length=1, max_length=200)] = None
+    title: Optional[str] = Field(min_length=1, max_length=200)
     date: Optional[date] = None
     type: Optional[AllowedType] = None
     status: Optional[AllowedStatus] = None
@@ -57,7 +57,7 @@ class WeatherImportRequest(BaseModel):
 
 
 class NewsImportRequest(BaseModel):
-    q: constr(min_length=1)
+    q: str = Field(min_length=1, max_length=200)
     from_date: Optional[date] = Field(default=None, alias="from")
     limit: int = Field(default=20, ge=1, le=50)
 

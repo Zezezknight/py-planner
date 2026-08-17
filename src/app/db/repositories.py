@@ -6,13 +6,12 @@ import uuid
 from datetime import date
 
 from fastapi import HTTPException
-from typing import Any, Optional, Protocol
+from typing import Any, Optional, Protocol, List
 from src.app.core.security import hash_password, create_access_token, verify_password
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 from src.app.models.users import TokenResponse
 
-# Pydantic-like plain dicts for repositories
 UserDict = dict[str, Any]
 TaskDict = dict[str, Any]
 
@@ -35,7 +34,7 @@ class TasksRepository(Protocol):
     ) -> list[TaskDict]: ...
     async def update(self, task_id: str, patch: dict[str, Any]) -> Optional[TaskDict]: ...
     async def delete(self, task_id: str) -> bool: ...
-    async def insert_many_generic(self, user_id: str, items: list[TaskDict]) -> tuple[int, list[TaskDict]]: ...
+    async def insert_many_generic(self, user_id: str, items: List[TaskDict]) -> tuple[int, List[TaskDict]]: ...
 
 
 # Motor implementations
@@ -145,13 +144,12 @@ class MotorTasksRepository(TasksRepository):
         return res.deleted_count == 1
 
 
-    async def insert_many_generic(self, user_id: str, items: list[TaskDict]) -> tuple[int, list[TaskDict]]:
+    async def insert_many_generic(self, user_id: str, items: List[TaskDict]) -> tuple[int, List[TaskDict]]:
         skipped = 0
         if not items:
             return 0, []
         for it in items:
             it["user_id"] = ObjectId(user_id)
-        # Используем upsert по уникальному индексу meta.source_id+user_id (создан при старте)
         inserted: list[TaskDict] = []
         for it in items:
             res = await self.coll.update_one(
@@ -240,10 +238,8 @@ class InMemoryTasksRepository(TasksRepository):
         return doc
 
 
-    async def get(self, user_id: str, task_id: str) -> Optional[TaskDict]:
+    async def get(self, task_id: str) -> Optional[TaskDict]:
         doc = self._items.get(task_id)
-        if not doc or doc["user_id"] != user_id:
-            return None
         return doc
 
 
@@ -260,23 +256,23 @@ class InMemoryTasksRepository(TasksRepository):
         return sorted(items, key=lambda x: x["date"])
 
 
-    async def update(self, user_id: str, task_id: str, patch: dict[str, Any]) -> Optional[TaskDict]:
-        doc = await self.get(user_id, task_id)
+    async def update(self, task_id: str, patch: dict[str, Any]) -> Optional[TaskDict]:
+        doc = await self.get(task_id)
         if not doc:
             return None
         doc.update(patch)
         return doc
 
 
-    async def delete(self, user_id: str, task_id: str) -> bool:
-        doc = await self.get(user_id, task_id)
+    async def delete(self, task_id: str) -> bool:
+        doc = await self.get(task_id)
         if not doc:
             return False
         del self._items[task_id]
         return True
 
 
-    async def insert_many_generic(self, user_id: str, items: list[TaskDict]) -> tuple[int, list[TaskDict]]:
+    async def insert_many_generic(self, user_id: str, items: List[TaskDict]) -> tuple[int, List[TaskDict]]:
         existing_source_ids = {
             d["meta"].get("source_id")
             for d in self._items.values()

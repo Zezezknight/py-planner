@@ -2,7 +2,6 @@ from typing import Any
 
 import httpx
 
-from src.app.core.http import create_http_client
 from src.app.external.base import ExternalImporter
 
 
