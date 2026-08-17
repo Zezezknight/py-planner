@@ -5,11 +5,11 @@ from pydantic import BaseModel, EmailStr, Field, constr
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: constr(min_length=8) = Field(..., description="Password, at least 8 characters")
+    password: str = Field(min_length=8, description="Password, at least 8 characters")
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: constr(min_length=8) = Field(..., description="Password, at least 8 characters")
+    password: str = Field(min_length=8, description="Password, at least 8 characters")
 
 class UserOut(BaseModel):
     id: str

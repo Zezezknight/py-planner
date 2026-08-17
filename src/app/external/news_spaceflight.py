@@ -5,7 +5,6 @@ import hashlib
 import httpx
 
 from src.app.external.base import ExternalImporter
-from src.app.core.http import create_http_client
 
 SPACEFLIGHT_BASE_URL = "https://api.spaceflightnewsapi.net/v4/articles/"
 
